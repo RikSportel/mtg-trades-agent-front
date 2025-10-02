@@ -86,7 +86,7 @@ function App() {
         })()}
         <h3>Conversation</h3>
         <ul>
-          {messages.map((msg, i) => (
+          {(Array.isArray(messages) ? messages : []).map((msg, i) => (
             <li key={i}><strong>{msg.role}:</strong> {msg.content}</li>
           ))}
         </ul>
