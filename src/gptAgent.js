@@ -16,7 +16,7 @@ export function useAgent() {
 			res = await fetch(agentUrl, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ message: userInput })
+				body: JSON.stringify({ message: userInput, messages })
 			});
 		} catch (error) {
 			console.error("Network error:", error);
