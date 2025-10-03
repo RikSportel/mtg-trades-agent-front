@@ -11,7 +11,6 @@ export function useAgent() {
 			throw new Error("Agent URL is not defined.");
 		}
 		console.log("Sending request to:", agentUrl);
-		console.log("Request body:", { userInput, messages });
 		let res;
 		try {
 			res = await fetch(agentUrl, {
