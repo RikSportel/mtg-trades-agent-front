@@ -1,6 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
-// useSpeech.js
 export function useSpeech({ onResult, onInterimResult, onStart, onEnd }) {
   const recognition = useRef(null);
 

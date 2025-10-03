@@ -13,11 +13,14 @@ export function useAgent() {
 		console.log("Sending request to:", agentUrl);
 		let res;
 		try {
-			res = await fetch(agentUrl, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ message: userInput, messages })
-			});
+      const body = messages.length > 0
+        ? { message: userInput, messages }
+        : { message: userInput };
+      res = await fetch(agentUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 		} catch (error) {
 			console.error("Network error:", error);
 			throw error;
