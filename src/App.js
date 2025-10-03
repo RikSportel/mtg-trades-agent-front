@@ -37,9 +37,9 @@ function App() {
     const result = await sendMessage(manualInput);
     setResponse(result);
     // Optional: Speak the result
-    const synth = window.speechSynthesis;
-    const utter = new SpeechSynthesisUtterance(result || "Done");
-    synth.speak(utter);
+    //const synth = window.speechSynthesis;
+    //const utter = new SpeechSynthesisUtterance(result || "Done");
+    //synth.speak(utter);
   };
 
   return (
