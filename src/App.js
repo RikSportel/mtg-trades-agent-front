@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSpeech } from "./useSpeech";
 import { useAgent } from "./gptAgent";
+import ReactMarkdown from "react-markdown";
 
 function App() {
   const [transcript, setTranscript] = useState("");
@@ -73,7 +74,7 @@ function App() {
             {(() => {
               const lastMsg = Array.isArray(messages) && messages.length > 0 ? messages[messages.length - 1] : null;
               if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
-                return lastMsg.content;
+                return <ReactMarkdown>{lastMsg.content}</ReactMarkdown>;
               }
               return <em>No agent response yet.</em>;
             })()}
