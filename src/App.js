@@ -53,7 +53,7 @@ function App() {
     }
 
     //console.log("Starting streaming fetch for:", manualInput);
-    const response = await fetch("http://localhost:8080/api/stream", {
+    const response = await fetch(`${process.env.REACT_APP_MTG_AGENT_URL}/api/stream`, {
       method: "POST",
       body: JSON.stringify({ message: manualInput, messages: trimmedMessages }),
       headers: { "Content-Type": "application/json" }
