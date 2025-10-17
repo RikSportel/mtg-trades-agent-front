@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSpeech } from "./useSpeech";
-import { useAgent } from "./gptAgent";
+//import { useAgent } from "./gptAgent";
 import ReactMarkdown from "react-markdown";
 
 function App() {
@@ -10,22 +10,21 @@ function App() {
   const [listening, setListening] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [loading, setLoading] = useState(false);
- 
-  // Use the new agent hook
-  const { messages, sendMessage } = useAgent();
+  //const { messages, sendMessage } = useAgent();
+  const [messages, setMessages] = useState([]);
 
   const startListening = useSpeech({
     onResult: async (text) => {
       setTranscript(text);
       setInterimTranscript("");
       setLoading(true);
-      const result = await sendMessage(text);
-      setResponse(result);
+      // THIS IS WHERE I AM USING SPEECH TO TEXT; UPDATE LATER.
+      // const result = await sendMessage(text);
       setLoading(false);
-        // Optional: Speak the result
-        //const synth = window.speechSynthesis;
-        //const utter = new SpeechSynthesisUtterance(result || "Done");
-        //synth.speak(utter);
+      // Optional: Speak the result
+      //const synth = window.speechSynthesis;
+      //const utter = new SpeechSynthesisUtterance(result || "Done");
+      //synth.speak(utter);
     },
     onInterimResult: (text) => {
       setInterimTranscript(text);
@@ -39,10 +38,76 @@ function App() {
     setTranscript(manualInput);
     setInterimTranscript("");
     setLoading(true);
-    const result = await sendMessage(manualInput);
-    setResponse(result);
+    setResponse(""); // Clear previous response
+    console.log("Messages before fetch:", messages);
+    let trimmedMessages = messages;
+    if (
+      Array.isArray(messages) &&
+      messages.length > 0 &&
+      messages[messages.length - 1].role === "assistant" &&
+      Array.isArray(messages[messages.length - 1].content) &&
+      messages[messages.length - 1].content.length > 0
+    ) {
+      trimmedMessages = messages.slice(0, -1);
+      setMessages(trimmedMessages);
+    }
+
+    //console.log("Starting streaming fetch for:", manualInput);
+    const response = await fetch("http://localhost:8080/api/stream", {
+      method: "POST",
+      body: JSON.stringify({ message: manualInput, messages: trimmedMessages }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let done = false;
+    let buffer = "";
+    let partialLine = "";
+    let streamedItems = [];
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunk = decoder.decode(value, { stream: !done });
+      buffer += chunk;
+      
+      const lines = (partialLine + buffer).split(/\r?\n/);
+      partialLine = lines.pop() || "";
+      buffer = "";
+
+      try {
+        //console.log("Buffer is now:", buffer);
+        //setResponse(buffer);
+        // If the backend streams newline-delimited JSON objects:
+        //const lines = chunk.split(/\r?\n/).filter(Boolean);
+        for (const line of lines) {
+          try {
+            if (line.startsWith("data:")) {
+              const jsonStr = line.slice(5).trim();
+              const obj = JSON.parse(jsonStr);
+              streamedItems.push(obj);
+              setResponse(obj.step);
+            }
+          } catch {
+            console.log("Failed to parse line:", line);
+          }
+        }
+      } catch (err) {
+        console.log("Error parsing chunk:", err);
+      }
+    }
+
+    const finalItem = streamedItems.length > 0 ? streamedItems[streamedItems.length - 1] : null;
+    if (finalItem) {
+      setResponse(JSON.stringify(finalItem, null, 2));
+      setMessages(finalItem);
+    } else {
+      setResponse(buffer);
+    }
     setLoading(false);
-    // Optional: Speak the result
+
+    //Optional: Speak the result
     //const synth = window.speechSynthesis;
     //const utter = new SpeechSynthesisUtterance(result || "Done");
     //synth.speak(utter);
@@ -73,7 +138,9 @@ function App() {
             fontSize: "1.5em",
             color: "#444"
           }}>
-            Loading...
+      <ReactMarkdown>
+        {response && response.length > 0 ? response : "Loading..."}
+      </ReactMarkdown>
           </div>
         </div>
       )}
@@ -187,7 +254,7 @@ function App() {
                     const resultMsg = messages.find(
                       m => m.type === 'function_call_output' && m.call_id === msg.call_id
                     );
-                    console.log("Tool call:", msg, "Result:", resultMsg);
+                    //console.log("Tool call:", msg, "Result:", resultMsg);
                     rows.push(
                       <tr key={i}>
                       <td style={{ border: '1px solid #ccc', padding: '6px' }}>{msg.name}</td>
